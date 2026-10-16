@@ -1,0 +1,20 @@
+# 按 README 的目录约定，以下内容不入库（均可重新获取或重新生成）
+# staging/ = Cosmos3-Edge 权重中转，用 scripts/get_weights.sh 重拉
+# data/    = wm1 轨迹数据，可重生成
+# docs/papers/ = 论文原文 PDF / pdftotext 残留 / arXiv HTML
+# docs/jepa/   = JEPA 与潜空间理论论文包
+# ref/         = 上游参考实现克隆（自带 .git）
+staging/
+data/
+docs/papers/
+docs/jepa/
+docs/figures/
+ref/
+
+# 权重与缓存
+*.safetensors
+*.pdf
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.log

@@ -1,0 +1,41 @@
+# 1 Introduction
+
+Physical AI agents perceive, reason, and take actions to interact with the real world. However, training such agents directly in the real world is slow, expensive, and could be dangerous. To overcome these bottlenecks, we must construct a training facility to enable safe and scalable learning in simulated worlds, where Physical AI agents acquire two fundamentally coupled capabilities: *understanding* and *generation* . Understanding allows an agent to infer latent representations, semantics, and dynamics from partial observations, and generation empowers the agent to predict and simulate plausible futures, anticipating how the world evolves and how the agent should take actions in response. Prior work has largely treated these two pillars in isolation, leading to separate discriminative models for perception and reasoning, such as Vision-Language Models (VLMs); generative models for world simulation, such as Video Generation Models and Forward Dynamics Models; and action-prediction models, such as Vision-Language-Action Models (VLAs) and World-Action Models (WAMs).
+
+We argue that this paradigm separation is fundamentally limiting: understanding requires reasoning about the future evolution of the world and the consequences of actions, while generation relies on a compact, structured representation of the world and agent behaviors. Unifying them into a single scalable framework is therefore essential for Physical AI. Consider a general home robot instructed to clean a dining table after dinner. Under the current paradigm, the robot must stitch together a disjointed suite of models: a VLM to locate dishware and generate an executable plan, a VLA or WAM to generate action sequences, and a Forward Dynamics Model or “World Model” to simulate and evaluate future states. This fragmented architecture is suboptimal and computationally wasteful. Can we instead design a single, unified model that natively addresses all essential capabilities for Physical AI agents?
+
+We introduce Cosmos 3, a family of omnimodal world models that jointly model language, image, video, audio, and action for both understanding and generation. Serving as a general-purpose backbone for Physical AI, Cosmos 3 unifies a wide array of distinct model classes into a single framework (Fig. 1). Depending on the input-output configuration, Cosmos 3 seamlessly transitions between multiple operational modes: it can operate as a vision-language model for multimodal understanding and reasoning; a text-to-image generator, a video generator for text-to-video synthesis, image animation (image-to-video), future prediction (video-to-video), or synchronous audio-video generation; a world-action model for joint action prediction and environmental simulation. By unifying perception, simulation, and execution without architectural modifications, Cosmos 3 eliminates the need for fragmented, task-specific pipelines, enabling scalable learning through shared representations and joint multi-task supervision.
+
+![Figure 1](figures/tikz_cosmos3_overview.png)
+
+> Figure 1: **Cosmos 3 serves as a general-purpose backbone for Physical AI. By jointly modeling language, image, video, audio, and action for both understanding and generation, Cosmos 3 unifies a wide range of model classes within a single network architecture, including vision-language models, image generation models, audio-visual generation models, policy or world-action models, forward dynamics models, and inverse dynamics models.**
+
+Scaling training data and environments for Physical AI agents remains a persistent bottleneck. Cosmos 3 offers a strong starting point to address this challenge in three ways: (i) synthetic data generation, (ii) task-specific specialization, and (iii) training environment (Fig. 2). In the near term, Cosmos 3 synthesizes high-fidelity, diverse visual data to enhance training for Physical AI agents. We demonstrate how we can post-train Cosmos 3 into a better synthetic data generator in Sec. 4.2.3 and Sec. 4.2.4. Since agents perceive and interact with environments through diverse embodiments and tasks, Cosmos 3 supports task- and embodiment-specific specialization on top of a shared model. As a powerful mid-training model for Physical AI, Cosmos 3 establishes a better starting point by modeling general world dynamics and action priors while remaining highly amenable to downstream adaptation. In practice, the model can be post-trained on target data for distinct applications without architectural modifications, enabling data-driven specialization that retains a common world representation thanks to its omnimodal design. Sec. 4.2.5 describes how we post-train Cosmos 3 into a highly capable world-action model on DROID. In the long term, Cosmos 3 is positioned to generate high-quality, complex training environments for Physical AI agents. To accelerate open research and deployment in Physical AI, we release our code, model checkpoints, curated synthetic datasets, and an evaluation benchmark under the OpenMDW-1.1 License at github.com/nvidia/cosmos and huggingface.co/collections/nvidia/cosmos3 .
+
+![Figure 2](figures/tikz_cosmos_platform.png)
+
+> Figure 2: **Cosmos 3 offers a strong starting point for training Physical AI agents. Cosmos 3 can be post-trained on target data for distinct applications without architectural modifications. In this paper, we demonstrate how we post-train Cosmos 3 for better synthetic data generation (Sec. 4.2.3 and Sec. 4.2.4) and better robot policy (Sec. 4.2.5). In the future, we expect Cosmos 3 to play an essential role in generating high-quality, complex environments for training Physical AI agents.**
+
+> Table 1: **Cosmos 3 results overview. Cosmos 3 consistently outperforms specialized open-source baselines across all capabilities. Detailed results can be found in Sec. 6. In the table, ∗ denotes post-trained Cosmos 3 variants; $\dagger$ denotes closed models; gray-colored cells in each row indicate the model does not possess the corresponding capabilities.**
+
+| — | — | — | — | — | — | — | — | — | — | — |
+|---|---|---|---|---|---|---|---|---|---|---|
+|  | **Reasoning** | **Generation** |  |  |  |  |  |  |  |  |
+| **General** | **Robotics** | **Smart infra.** | **Driving** | **Text2Image** | **Text2Video** | **Image2Video** | **Audio** | **FD: Robot** | **Policy: Robot** |  |
+| **Cosmos3-Super** | 73.7 | 57.8 | **62.6** | **79.3** | **91.36*∗*** | **80.0** | **82.8** | 7.31 | **26.0*∗*** | - |
+| **Cosmos3-Nano** | 69.6 | 55.1 | 61.0 | 76.0 | 84.61 | 79.4 | 82.7 | 7.34 | 25.5*∗* | **39.7*∗*** |
+| Gemini 3.1 Pro† | **77.5** | **58.2** | 58.6 | 47.2 |  |  |  |  |  |  |
+| Qwen3-VL-32B | 72.8 | 52.6 | 56.1 | 40.7 |  |  |  |  |  |  |
+| Qwen3-VL-8B | 68.9 | 48.5 | 52.7 | 46.4 |  |  |  |  |  |  |
+| Gemma-4-31B | 69.8 | 51.0 | 51.3 | 36.6 |  |  |  |  |  |  |
+| Gemma-4-E4B | 53.1 | 39.3 | 29.4 | 26.0 |  |  |  |  |  |  |
+| Gemini 3 Pro Image† |  |  |  |  | 90.85 |  |  |  |  |  |
+| Qwen-Image-2512 |  |  |  |  | 84.25 |  |  |  |  |  |
+| Veo-3.1† |  |  |  |  |  | 79.1 | 82.6 | **7.45** |  |  |
+| Wan2.2-A14B |  |  |  |  |  | 78.0 | 81.3 |  |  |  |
+| Ctrl-World |  |  |  |  |  |  |  |  | 23.0 |  |
+| $\pi_{0.5}$ |  |  |  |  |  |  |  |  |  | 28.1 |
+
+We evaluate Cosmos 3 and its post-trained variants on a wide range of benchmarks, covering essential understanding and generation capabilities for Physical AI. Tab. 1 provides a summary of our benchmark results, detailed in Sec. 6. As shown in the table, Cosmos 3 establishes a new state-of-the-art across most capabilities, being highly competitive or outperforming specialized models.
+
+The technical details of Cosmos 3 are organized as follows. Sec. 2 introduces the model architecture, including encoders for all modalities, the arrangement of multimodal tokens to enable different generation modes, the Mixture-of-Transformers (MoT) backbone, multimodal position embedding, and model variants. Sec. 3 outlines the training data for the reasoner and generator training. Sec. 4 details the training recipes for reasoner and generator. Sec. 5 describes infrastructure, including data, training, serving, and evaluation. Sec. 6 presents our experimental results. Sec. 7 discusses related work and Sec. 8 concludes the paper.
